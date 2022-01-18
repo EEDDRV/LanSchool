@@ -135,7 +135,7 @@ namespace Lan_School_Monitor
 								}
 							}
 						}
-						Thread.Sleep(150); // To decrease cpu load.
+						Thread.Sleep(200); // To decrease cpu load.
 					}
 				}
 				catch( ThreadAbortException e )
