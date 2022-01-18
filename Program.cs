@@ -131,7 +131,7 @@ namespace Lan_School_Monitor
 								{
 									last_notified = DateTime.Now;
 									notifyicon.ShowBalloonTip(1000, "Network Usage", "Network usage detected on " + net.InstanceName, ToolTipIcon.Info);
-									Console.WriteLine("Network usage detected on " + net.InstanceName+" "+DateTime.Now.ToString());
+									Console.WriteLine("Network usage detected on " + net.InstanceName+" at "+DateTime.Now.ToString());
 								}
 							}
 						}
