@@ -10,11 +10,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-[assembly: AssemblyVersion("0.0.0.1")]
+[assembly: AssemblyVersion("0.0.0.2")]
 [assembly: AssemblyTitle("")]
 [assembly: AssemblyCompany("")]
 [assembly: NeutralResourcesLanguage("en")]
-[assembly: AssemblyFileVersion("0.0.0.1")]
+[assembly: AssemblyFileVersion("0.0.0.2")]
 [assembly: AssemblyProduct("")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyCopyright("")]
@@ -150,7 +150,7 @@ namespace Lan_School_Monitor
 								}
 							}
 						}
-						Thread.Sleep(200); // To decrease cpu load.
+						Thread.Sleep(500); // To decrease cpu load.
 					}
 				}
 				catch( ThreadAbortException e )
