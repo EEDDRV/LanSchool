@@ -174,10 +174,10 @@ namespace Lan_School_Monitor
 
 			foreach (Process theprocess in Process.GetProcesses())
 			{
-				if (theprocess.ProcessName.Contains("powershell") //||
-					/*theprocess.ProcessName.Contains("Lsk") ||
+				if (//theprocess.ProcessName.Contains("powershell") //||
+					theprocess.ProcessName.Contains("Lsk") ||
 					theprocess.ProcessName.Contains("student") ||
-					theprocess.ProcessName.Contains("Isk")*/
+					theprocess.ProcessName.Contains("Isk")
 					)
 				{
 					ProcessList.Add(theprocess);
