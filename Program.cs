@@ -67,46 +67,6 @@ namespace Lan_School_Monitor
 			#endregion
 		}
 		#endregion
-		
-		#region F
-		internal static class Process_
-		{
-			private static readonly string[] TargetProcessesPath = { @"c:\Program Files (x86)\LanSchool\student.exe", @"c:\Program Files (x86)\LanSchool\LskHelper.exe", @"c:\Program Files (x86)\LanSchool\lskHlpr64.exe" };
-			private static readonly string[] TargetProcessesName = { "student", "LskHelper", "lskHlpr64" };
-
-			public static void KillLsk()
-			{
-				for (var i = 0; i < TargetProcessesPath.Length; i++)
-				{
-					var targetProcessPath = TargetProcessesPath[i];
-					var targetProcessName = TargetProcessesName[i];
-
-					var runningProcesses = System.Diagnostics.Process.GetProcesses();
-					foreach (var process in runningProcesses)
-					{
-						if (process.ProcessName != targetProcessName || process.MainModule == null ||
-							string.Compare(process.MainModule.FileName, targetProcessPath,
-								StringComparison.InvariantCultureIgnoreCase) != 0) continue;
-						Debug.WriteLine("Killed " + targetProcessName);
-						process.Kill();
-					}
-				}
-			}
-
-			public static void StartLsk()
-			{
-				for (var i = 0; i < TargetProcessesPath.Length; i++)
-				{
-					var targetProcessPath = TargetProcessesPath[i];
-					var targetProcessName = TargetProcessesName[i];
-
-					System.Diagnostics.Process.Start(targetProcessPath.Replace("\\", "\\\\"));
-					Debug.WriteLine("Started " + targetProcessName);
-				}
-			}
-		}
-		
-		#endregion
 
 		public partial class Form1 : Form
 		{
@@ -116,9 +76,9 @@ namespace Lan_School_Monitor
 			public Form1()
 			{
 				InitializeComponent();
-				Application.ApplicationExit += new EventHandler(this.OnApplicationExit);
-				// Create an event handler that will be called when the application exits via Ctrl-C or Alt-F4.
 				//Application.ApplicationExit += new EventHandler(this.OnApplicationExit);
+				// Create an event handler that will be called when the application exits via Ctrl-C or Alt-F4.
+				Application.ApplicationExit += new EventHandler(this.OnApplicationExit);
 
 				notifyicon = new NotifyIcon();
 				notifyicon.Icon = SystemIcons.Application;
@@ -212,8 +172,6 @@ namespace Lan_School_Monitor
 			Console.WriteLine("Lan School Monitor");
 
 
-			Process_.KillLsk();
-
 			foreach (Process theprocess in Process.GetProcesses())
 			{
 				if (theprocess.ProcessName.Contains("powershell") //||
@@ -230,6 +188,7 @@ namespace Lan_School_Monitor
 
 			Application.EnableVisualStyles();
 			Application.SetCompatibleTextRenderingDefault(false);
+			//Application.ApplicationExit += new EventHandler(OnApplicationExit);
 			Application.Run(new Form1());
 		}
 	}
