@@ -143,12 +143,15 @@ namespace Lan_School_Monitor
 								if(DateTime.Now.Subtract(last_notified).TotalSeconds > 8)
 								{
 									last_notified = DateTime.Now;
+									notifyicon.Icon = SystemIcons.Warning;
 									// Make the message as a string.
 									string message = String.Format("Network activity detected on \"{0}\" at {1}.", net.InstanceName, DateTime.Now.ToString());
 									notifyicon.ShowBalloonTip(1000, "Network Usage", message, ToolTipIcon.Info);
 									Console.WriteLine(message);
 								}
 							}
+							else
+							{ notifyicon.Icon = SystemIcons.Application; }
 						}
 						Thread.Sleep(1000); // To decrease cpu load.
 					}
