@@ -150,7 +150,7 @@ namespace Lan_School_Monitor
 								}
 							}
 						}
-						Thread.Sleep(500); // To decrease cpu load.
+						Thread.Sleep(1000); // To decrease cpu load.
 					}
 				}
 				catch( ThreadAbortException e )
@@ -182,7 +182,7 @@ namespace Lan_School_Monitor
 					)
 				{
 					ProcessList.Add(theprocess);
-					Console.WriteLine("Process: {0} ID: {1}", theprocess.ProcessName, theprocess.Id);
+					Console.WriteLine("Process: \"{0}\" ID: {1}", theprocess.ProcessName, theprocess.Id);
 				}
 			}
 
