@@ -177,6 +177,7 @@ namespace Lan_School_Monitor
 				if (//theprocess.ProcessName.Contains("powershell") //||
 					theprocess.ProcessName.Contains("Lsk") ||
 					theprocess.ProcessName.Contains("student") ||
+					theprocess.ProcessName.Contains("lskHlpr64") ||
 					theprocess.ProcessName.Contains("Isk")
 					)
 				{
