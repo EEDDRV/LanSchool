@@ -10,6 +10,16 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
+[assembly: AssemblyVersion("0.0.0.1")]
+[assembly: AssemblyTitle("")]
+[assembly: AssemblyCompany("")]
+[assembly: NeutralResourcesLanguage("en")]
+[assembly: AssemblyFileVersion("0.0.0.1")]
+[assembly: AssemblyProduct("")]
+[assembly: AssemblyDescription("")]
+[assembly: AssemblyCopyright("")]
+[assembly: AssemblyTrademark("")]
+
 namespace Lan_School_Monitor
 {
 	public class Program
@@ -57,6 +67,47 @@ namespace Lan_School_Monitor
 			#endregion
 		}
 		#endregion
+		
+		#region F
+		internal static class Process_
+		{
+			private static readonly string[] TargetProcessesPath = { @"c:\Program Files (x86)\LanSchool\student.exe", @"c:\Program Files (x86)\LanSchool\LskHelper.exe", @"c:\Program Files (x86)\LanSchool\lskHlpr64.exe" };
+			private static readonly string[] TargetProcessesName = { "student", "LskHelper", "lskHlpr64" };
+
+			public static void KillLsk()
+			{
+				for (var i = 0; i < TargetProcessesPath.Length; i++)
+				{
+					var targetProcessPath = TargetProcessesPath[i];
+					var targetProcessName = TargetProcessesName[i];
+
+					var runningProcesses = System.Diagnostics.Process.GetProcesses();
+					foreach (var process in runningProcesses)
+					{
+						if (process.ProcessName != targetProcessName || process.MainModule == null ||
+							string.Compare(process.MainModule.FileName, targetProcessPath,
+								StringComparison.InvariantCultureIgnoreCase) != 0) continue;
+						Debug.WriteLine("Killed " + targetProcessName);
+						process.Kill();
+					}
+				}
+			}
+
+			public static void StartLsk()
+			{
+				for (var i = 0; i < TargetProcessesPath.Length; i++)
+				{
+					var targetProcessPath = TargetProcessesPath[i];
+					var targetProcessName = TargetProcessesName[i];
+
+					System.Diagnostics.Process.Start(targetProcessPath.Replace("\\", "\\\\"));
+					Debug.WriteLine("Started " + targetProcessName);
+				}
+			}
+		}
+		
+		#endregion
+
 		public partial class Form1 : Form
 		{
 			NotifyIcon notifyicon;
@@ -107,6 +158,8 @@ namespace Lan_School_Monitor
 			void Monitor_Thread()
 			{
 				DateTime last_notified = DateTime.Now;
+				this.WindowState = FormWindowState.Minimized;
+				this.ShowInTaskbar = false;
 				try
 				{
 					//
@@ -130,8 +183,10 @@ namespace Lan_School_Monitor
 								if(DateTime.Now.Subtract(last_notified).TotalSeconds > 8)
 								{
 									last_notified = DateTime.Now;
-									notifyicon.ShowBalloonTip(1000, "Network Usage", "Network usage detected on " + net.InstanceName, ToolTipIcon.Info);
-									Console.WriteLine("Network usage detected on " + net.InstanceName+" at "+DateTime.Now.ToString());
+									// Make the message as a string.
+									string message = String.Format("Network activity detected on \"{0}\" at {1}.", net.InstanceName, DateTime.Now.ToString());
+									notifyicon.ShowBalloonTip(1000, "Network Usage", message, ToolTipIcon.Info);
+									Console.WriteLine(message);
 								}
 							}
 						}
@@ -154,14 +209,17 @@ namespace Lan_School_Monitor
 		[STAThread]
 		static void Main()
 		{
-			Console.WriteLine("Lan_School_Monitor");
+			Console.WriteLine("Lan School Monitor");
+
+
+			Process_.KillLsk();
 
 			foreach (Process theprocess in Process.GetProcesses())
 			{
-				if (//theprocess.ProcessName.Contains("python") //||
-					theprocess.ProcessName.Contains("Lsk") ||
+				if (theprocess.ProcessName.Contains("powershell") //||
+					/*theprocess.ProcessName.Contains("Lsk") ||
 					theprocess.ProcessName.Contains("student") ||
-					theprocess.ProcessName.Contains("Isk")
+					theprocess.ProcessName.Contains("Isk")*/
 					)
 				{
 					ProcessList.Add(theprocess);
