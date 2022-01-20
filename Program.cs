@@ -11,7 +11,7 @@ using System.Linq;
 using System.Text;
 
 [assembly: AssemblyVersion("0.0.0.2")]
-[assembly: AssemblyTitle("")]
+[assembly: AssemblyTitle("LSM")]
 [assembly: AssemblyCompany("")]
 [assembly: NeutralResourcesLanguage("en")]
 [assembly: AssemblyFileVersion("0.0.0.2")]
@@ -104,7 +104,7 @@ namespace Lan_School_Monitor
 			}
 
 			void OnApplicationExit(object sender, EventArgs e)
-			{	
+			{
 				notifyicon.Dispose();
 			}
 
@@ -177,7 +177,7 @@ namespace Lan_School_Monitor
 
 			foreach (Process theprocess in Process.GetProcesses())
 			{
-				if (//theprocess.ProcessName.Contains("powershell") //||
+				if (//theprocess.ProcessName.Contains("powershell") // <For testing only.
 					theprocess.ProcessName.Contains("Lsk") ||
 					theprocess.ProcessName.Contains("student") ||
 					theprocess.ProcessName.Contains("lskHlpr64") ||
@@ -188,7 +188,6 @@ namespace Lan_School_Monitor
 					Console.WriteLine("Process: \"{0}\" ID: {1}", theprocess.ProcessName, theprocess.Id);
 				}
 			}
-
 
 			Application.EnableVisualStyles();
 			Application.SetCompatibleTextRenderingDefault(false);
