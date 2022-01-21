@@ -15,7 +15,7 @@ using System.Text;
 [assembly: AssemblyCompany("")]
 [assembly: NeutralResourcesLanguage("en")]
 [assembly: AssemblyFileVersion("0.0.0.2")]
-[assembly: AssemblyProduct("")]
+[assembly: AssemblyProduct("LSM")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyCopyright("")]
 [assembly: AssemblyTrademark("")]
