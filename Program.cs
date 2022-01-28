@@ -26,11 +26,14 @@ namespace Lan_School_Monitor
 {
 	public class setting
 		{
-			[System.ComponentModel.DefaultValue(false)]
+			public setting() //public setting(WIFI_Detected_ = false, Notify = true, Hide = true)
+			{
+				WIFI_Detected = false;
+				Notify = true;
+				Hide = true;
+			}
 			public bool WIFI_Detected { get; set; }
-			[System.ComponentModel.DefaultValue(true)]
 			public bool Notify { get; set; }
-			[System.ComponentModel.DefaultValue(true)]
 			public bool Hide { get; set; }
 		}
 		
@@ -207,7 +210,7 @@ namespace Lan_School_Monitor
 				}
 			}
 
-			if (Settings.Hide)
+			if (Settings.Hide == true)
 			{	Console.WriteLine("LSM");	}
 			else {	Console.WriteLine("Lan School Monitor");	}
 
