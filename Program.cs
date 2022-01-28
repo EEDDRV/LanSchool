@@ -10,11 +10,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-[assembly: AssemblyVersion("0.0.0.2")]
+[assembly: AssemblyVersion("0.0.0.3")]
 [assembly: AssemblyTitle("LSM")]
 [assembly: AssemblyCompany("")]
 [assembly: NeutralResourcesLanguage("en")]
-[assembly: AssemblyFileVersion("0.0.0.2")]
+[assembly: AssemblyFileVersion("0.0.0.3")]
 [assembly: AssemblyProduct("LSM")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyCopyright("")]
@@ -139,11 +139,11 @@ namespace Lan_School_Monitor
 							//Console.WriteLine("Process: {1} Net: {0}", net.NextValue(), ProcessList[0].ProcessName);
 							if(value != 0.0)
 							{
+								notifyicon.Icon = SystemIcons.Warning;
 								// Notify if 8 seconds have passed since the last notification.
 								if(DateTime.Now.Subtract(last_notified).TotalSeconds > 8)
 								{
 									last_notified = DateTime.Now;
-									notifyicon.Icon = SystemIcons.Warning;
 									// Make the message as a string.
 									string message = String.Format("Network activity detected on \"{0}\" at {1}.", net.InstanceName, DateTime.Now.ToString());
 									notifyicon.ShowBalloonTip(1000, "Network Usage", message, ToolTipIcon.Info);
