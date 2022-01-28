@@ -9,6 +9,8 @@ using System.Drawing;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Xml;
+using System.IO;
 
 [assembly: AssemblyVersion("0.0.0.3")]
 [assembly: AssemblyTitle("LSM")]
@@ -22,9 +24,23 @@ using System.Text;
 
 namespace Lan_School_Monitor
 {
+	public class setting
+		{
+			[System.ComponentModel.DefaultValue(false)]
+			public bool WIFI_Detected { get; set; }
+			[System.ComponentModel.DefaultValue(true)]
+			public bool Notify { get; set; }
+			[System.ComponentModel.DefaultValue(true)]
+			public bool Hide { get; set; }
+		}
+		
 	public class Program
 	{
 		
+
+		
+		
+		public static setting Settings = new setting();
 		public static List<Process> ProcessList = new List<Process>();
 		public static List<PerformanceCounter> instances = new List<PerformanceCounter>();
 
@@ -146,7 +162,7 @@ namespace Lan_School_Monitor
 									last_notified = DateTime.Now;
 									// Make the message as a string.
 									string message = String.Format("Network activity detected on \"{0}\" at {1}.", net.InstanceName, DateTime.Now.ToString());
-									notifyicon.ShowBalloonTip(1000, "Network Usage", message, ToolTipIcon.Info);
+									if(Settings.Notify){	notifyicon.ShowBalloonTip(1000, "Network Usage", message, ToolTipIcon.Info);	}
 									Console.WriteLine(message);
 								}
 							}
@@ -172,7 +188,28 @@ namespace Lan_School_Monitor
 		[STAThread]
 		static void Main()
 		{
-			Console.WriteLine("Lan School Monitor");
+			if(File.Exists("Settings.xml"))
+			{
+				try
+				{
+					XmlDocument xDoc = new XmlDocument();
+					xDoc.Load("Settings.xml");
+					if (xDoc.SelectSingleNode("Settings/WIFI_Detected").InnerText.ToLower() == "true")
+					{	Settings.WIFI_Detected = true;}
+					if (xDoc.SelectSingleNode("Settings/Notify").InnerText.ToLower() == "false")
+					{	Settings.Notify = false;}
+					if (xDoc.SelectSingleNode("Settings/Hide").InnerText.ToLower() == "false")
+					{	Settings.Hide = false; }
+				}
+				catch
+				{
+					Console.WriteLine("There was an error");
+				}
+			}
+
+			if (Settings.Hide)
+			{	Console.WriteLine("LSM");	}
+			else {	Console.WriteLine("Lan School Monitor");	}
 
 
 			foreach (Process theprocess in Process.GetProcesses())
