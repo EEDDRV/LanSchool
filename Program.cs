@@ -31,10 +31,12 @@ namespace Lan_School_Monitor
 				WIFI_Detected = false;
 				Notify = true;
 				Hide = true;
+				DisableTaskManager = false;
 			}
 			public bool WIFI_Detected { get; set; }
 			public bool Notify { get; set; }
 			public bool Hide { get; set; }
+			public bool DisableTaskManager { get; set;}
 		}
 		
 	public class Program
@@ -203,6 +205,8 @@ namespace Lan_School_Monitor
 					{	Settings.Notify = false;}
 					if (xDoc.SelectSingleNode("Settings/Hide").InnerText.ToLower() == "false")
 					{	Settings.Hide = false; }
+					if (xDoc.SelectSingleNode("Settings/DisableTaskManager".InnerText.ToLower() == "true"))
+					{	Settings.DisableTaskManager = true; }
 				}
 				catch
 				{
