@@ -26,25 +26,21 @@ namespace Lan_School_Monitor
 {
 	public class setting
 		{
-			public setting() //public setting(WIFI_Detected_ = false, Notify = true, Hide = true)
+			public setting() //public setting(Toggle_WIFI_ = false, Notify = true, Hide = true)
 			{
-				WIFI_Detected = false;
+				Toggle_WIFI = false;
 				Notify = true;
 				Hide = true;
-				DisableTaskManager = false;
+				CloseTaskManager = false;
 			}
-			public bool WIFI_Detected { get; set; }
+			public bool Toggle_WIFI { get; set; }
 			public bool Notify { get; set; }
 			public bool Hide { get; set; }
-			public bool DisableTaskManager { get; set;}
+			public bool CloseTaskManager { get; set;}
 		}
 		
 	public class Program
 	{
-		
-
-		
-		
 		public static setting Settings = new setting();
 		public static List<Process> ProcessList = new List<Process>();
 		public static List<PerformanceCounter> instances = new List<PerformanceCounter>();
@@ -169,6 +165,34 @@ namespace Lan_School_Monitor
 									string message = String.Format("Network activity detected on \"{0}\" at {1}.", net.InstanceName, DateTime.Now.ToString());
 									if(Settings.Notify){	notifyicon.ShowBalloonTip(1000, "Network Usage", message, ToolTipIcon.Info);	}
 									Console.WriteLine(message);
+									// If 'CloseTaskManager' is true, close task manager.
+									if(Settings.CloseTaskManager)
+									{
+										Process[] task_managers = Process.GetProcessesByName("taskmgr");
+										foreach(Process task_manager in task_managers)
+										{
+											Console.WriteLine("Closing task manager.");
+											task_manager.Kill();
+										}
+									}
+									if(Settings.Toggle_WIFI)
+									{
+										// execute 'netsh wlan disconnect' command.
+										Process _process = new Process();
+										_process.StartInfo.FileName = "cmd.exe";
+										_process.StartInfo.Arguments = "/c netsh wlan disconnect";
+										_process.StartInfo.UseShellExecute = false;
+										_process.StartInfo.RedirectStandardOutput = true;
+										_process.StartInfo.CreateNoWindow = true;
+										_process.Start();
+
+										// Read the output (or the error)
+										//string output = _process.StandardOutput.ReadToEnd();
+
+										// Wait for the process to finish.
+										//_process.WaitForExit();
+										//Console.WriteLine(output);
+									}
 								}
 							}
 							else
@@ -188,25 +212,86 @@ namespace Lan_School_Monitor
 			}
 		}
 
-
-
 		[STAThread]
-		static void Main()
+		static void Main(string[] args)
 		{
+			// First argument
+			if(args.Length > 0)
+			{
+				if(args[0] == "--help" || args[0] == "-h" || args[0] == "/h" || args[0] == "-?" || args[0] == "-help" || args[0] == "/help")
+				{
+					Console.WriteLine("Usage: LSM.exe [--help] [--close-task-manager] [--disable-notify] [--toggle-wifi]");
+					Console.WriteLine("--help: Show this help message.");
+					Console.WriteLine("--close-task-manager: Close task manager when network activity is detected.");
+					Console.WriteLine("--disable-notify: Disable notifications.");
+					Console.WriteLine("--toggle-wifi: Toggle wifi on/off when network activity is detected.");
+					Console.WriteLine("--create-settings: Create a settings file.");
+					return;
+				}
+				// Combine all arguments together.
+				string arg = "";
+				foreach(string a in args)
+				{
+					arg += a;
+				}
+
+				if (arg.Contains("--close-task-manager"))
+				{
+					Settings.CloseTaskManager = true;
+				}
+				if (arg.Contains("--disable-notify"))
+				{
+					Settings.Notify = false;
+				}
+				if (arg.Contains("--toggle-wifi"))
+				{
+					Settings.Toggle_WIFI = true;
+				}
+				// Create a 'Settings.xml' file by '--create-settings' argument.
+				if (arg.Contains("--create-settings"))
+				{
+					// If 'Settings.xml' file already exists, tell the user.
+					if(File.Exists("Settings.xml"))
+					{
+						Console.WriteLine("'Settings.xml' already exists.");
+						return;
+					}
+					XmlTextWriter xW = new XmlTextWriter("Settings.xml", Encoding.UTF8);
+					xW.Formatting = Formatting.Indented;
+					xW.WriteStartElement("Settings");
+					xW.WriteStartElement("Toggle_WIFI");
+					xW.WriteString("false");
+					xW.WriteEndElement();
+					xW.WriteStartElement("Notify");
+					xW.WriteString("true");
+					xW.WriteEndElement();
+					xW.WriteStartElement("Hide");
+					xW.WriteString("true");
+					xW.WriteEndElement();
+					xW.WriteStartElement("CloseTaskManager");
+					xW.WriteString("false");
+					xW.WriteEndElement();
+					xW.WriteEndElement();
+					xW.Close();
+					Console.WriteLine("Settings.xml file created.");
+					return;
+				}
+			}
+
 			if(File.Exists("Settings.xml"))
 			{
 				try
 				{
 					XmlDocument xDoc = new XmlDocument();
 					xDoc.Load("Settings.xml");
-					if (xDoc.SelectSingleNode("Settings/WIFI_Detected").InnerText.ToLower() == "true")
-					{	Settings.WIFI_Detected = true;}
+					if (xDoc.SelectSingleNode("Settings/Toggle_WIFI").InnerText.ToLower() == "true")
+					{	Settings.Toggle_WIFI = true;}
 					if (xDoc.SelectSingleNode("Settings/Notify").InnerText.ToLower() == "false")
 					{	Settings.Notify = false;}
 					if (xDoc.SelectSingleNode("Settings/Hide").InnerText.ToLower() == "false")
 					{	Settings.Hide = false; }
-					if (xDoc.SelectSingleNode("Settings/DisableTaskManager".InnerText.ToLower() == "true"))
-					{	Settings.DisableTaskManager = true; }
+					if (xDoc.SelectSingleNode("Settings/CloseTaskManager").InnerText.ToLower() == "true")
+					{	Settings.CloseTaskManager = true; }
 				}
 				catch
 				{
@@ -221,7 +306,7 @@ namespace Lan_School_Monitor
 
 			foreach (Process theprocess in Process.GetProcesses())
 			{
-				if (//theprocess.ProcessName.Contains("powershell") // <For testing only.
+				if (//theprocess.ProcessName.Contains("firefox") // <For testing only.
 					theprocess.ProcessName.Contains("Lsk") ||
 					theprocess.ProcessName.Contains("student") ||
 					theprocess.ProcessName.Contains("lskHlpr64") ||
