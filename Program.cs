@@ -293,9 +293,10 @@ namespace Lan_School_Monitor
 					if (xDoc.SelectSingleNode("Settings/CloseTaskManager").InnerText.ToLower() == "true")
 					{	Settings.CloseTaskManager = true; }
 				}
-				catch
+				catch(Exception ex)
 				{
-					Console.WriteLine("There was an error");
+					Console.WriteLine("There was an error.");
+					Console.WriteLine(ex.Message);
 				}
 			}
 
