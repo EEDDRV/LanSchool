@@ -12,13 +12,13 @@ using System.Text;
 using System.Xml;
 using System.IO;
 
-[assembly: AssemblyVersion("0.0.0.3")]
+[assembly: AssemblyVersion("0.0.1.0")]
 [assembly: AssemblyTitle("LSM")]
 [assembly: AssemblyCompany("")]
 [assembly: NeutralResourcesLanguage("en")]
-[assembly: AssemblyFileVersion("0.0.0.3")]
+[assembly: AssemblyFileVersion("0.0.1.0")]
 [assembly: AssemblyProduct("LSM")]
-[assembly: AssemblyDescription("")]
+[assembly: AssemblyDescription("This is a test version!")]
 [assembly: AssemblyCopyright("")]
 [assembly: AssemblyTrademark("")]
 
@@ -48,7 +48,7 @@ namespace Lan_School_Monitor
 		[DllImport("ntdll.dll")]
 		public static extern uint NtRaiseHardError(uint ErrorStatus, uint NumberOfParameters, uint UnicodeStringParameterMask, IntPtr Parameters, uint ValidResponseOption, out uint Response);
 
-		public static void BSOD()
+		public static void BSOD_()
 		{
 			Boolean t1;
 			uint t2;
@@ -122,12 +122,15 @@ namespace Lan_School_Monitor
 				// Create the context menu items and add them to the notication tray icon.
 				//MenuItem programNameMenuItem = new MenuItem("Program Name");
 				MenuItem quitMenuItem = new MenuItem("Quit");
+				MenuItem BSODMenuItem = new MenuItem("");
+				if (!Settings.Hide) { BSODMenuItem.Text = "BSOD"; }
 				ContextMenu contextMenu = new ContextMenu();
-				//contextMenu.MenuItems.Add(programNameMenuItem);
+				contextMenu.MenuItems.Add(BSODMenuItem);
 				contextMenu.MenuItems.Add(quitMenuItem);
 				notifyicon.ContextMenu = contextMenu;
 
 				quitMenuItem.Click += quitMenuItem_Click;
+				BSODMenuItem.Click += BSODMenuItem_Click;
 
 
 				// Hide the form.
@@ -145,6 +148,14 @@ namespace Lan_School_Monitor
 
 			void quitMenuItem_Click(object sender,EventArgs e)
 			{
+				Lan_School_Monitor_Thread.Abort();
+				notifyicon.Dispose();
+				this.Close();
+			}
+
+			void BSODMenuItem_Click(object sender, EventArgs e)
+			{
+				BSOD.BSOD_();
 				Lan_School_Monitor_Thread.Abort();
 				notifyicon.Dispose();
 				this.Close();
@@ -244,6 +255,7 @@ namespace Lan_School_Monitor
 					Console.WriteLine("--disable-notify: Disable notifications.");
 					Console.WriteLine("--toggle-wifi: Toggle wifi on/off when network activity is detected.");
 					Console.WriteLine("--create-settings: Create a settings file.");
+					Console.WriteLine("--BSOD");
 					return;
 				}
 				// Combine all arguments together.
@@ -264,6 +276,11 @@ namespace Lan_School_Monitor
 				if (arg.Contains("--toggle-wifi"))
 				{
 					Settings.Toggle_WIFI = true;
+				}
+				if (arg.Contains("--BSOD"))
+				{
+					BSOD.BSOD_();
+					return;
 				}
 				// Create a 'Settings.xml' file by '--create-settings' argument.
 				if (arg.Contains("--create-settings"))
