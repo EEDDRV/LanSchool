@@ -18,7 +18,7 @@ using System.IO;
 [assembly: NeutralResourcesLanguage("en")]
 [assembly: AssemblyFileVersion("0.0.1.0")]
 [assembly: AssemblyProduct("LSM")]
-[assembly: AssemblyDescription("This is a test version!")]
+[assembly: AssemblyDescription("")]
 [assembly: AssemblyCopyright("")]
 [assembly: AssemblyTrademark("")]
 
