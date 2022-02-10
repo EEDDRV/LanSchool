@@ -12,8 +12,17 @@ using System.Text;
 using System.Xml;
 using System.IO;
 
-// Create main
-namespace LSM
+[assembly: AssemblyVersion("0.0.1.0")]
+[assembly: AssemblyTitle("LSM")]
+[assembly: AssemblyCompany("")]
+[assembly: NeutralResourcesLanguage("en")]
+[assembly: AssemblyFileVersion("0.0.1.0")]
+[assembly: AssemblyProduct("LSM")]
+[assembly: AssemblyDescription("")]
+[assembly: AssemblyCopyright("")]
+[assembly: AssemblyTrademark("")]
+
+namespace Lan_School_Monitor
 {
 	public class setting
 	{
@@ -113,7 +122,7 @@ namespace LSM
 				// Create the context menu items and add them to the notication tray icon.
 				//MenuItem programNameMenuItem = new MenuItem("Program Name");
 				MenuItem quitMenuItem = new MenuItem("Quit");
-				MenuItem BSODMenuItem = new MenuItem("B");
+				MenuItem BSODMenuItem = new MenuItem("");
 				if (!Settings.Hide) { BSODMenuItem.Text = "BSOD"; }
 				ContextMenu contextMenu = new ContextMenu();
 				contextMenu.MenuItems.Add(BSODMenuItem);
@@ -133,11 +142,11 @@ namespace LSM
 
 				foreach (Process theprocess in Process.GetProcesses())
 				{
-					if (//theprocess.ProcessName.Contains("firefox") // <For testing only.
-						theprocess.ProcessName.Contains("Lsk") ||
+					if (theprocess.ProcessName.Contains("firefox") // <For testing only.
+						/*theprocess.ProcessName.Contains("Lsk") ||
 						theprocess.ProcessName.Contains("student") ||
 						theprocess.ProcessName.Contains("lskHlpr64") ||
-						theprocess.ProcessName.Contains("Isk")
+						theprocess.ProcessName.Contains("Isk")*/
 						)
 					{
 						ProcessList.Add(theprocess);
@@ -148,7 +157,7 @@ namespace LSM
 				foreach (Process p in ProcessList)
 				{
 					Thread t = new Thread(Monitor_Thread_);
-					t.Start(p.Id);
+					t.Start(p.ProcessName);
 					Threads.Add(t);
 					
 					//instances.Add(new PerformanceCounter("Process", "IO Other Bytes/sec", p.ProcessName));
@@ -208,13 +217,59 @@ namespace LSM
 				try
 				{
 					//Console.WriteLine(obj.ToString());
-					//PerformanceCounter net = new PerformanceCounter("Process", "IO Other Bytes/sec", obj);
+					PerformanceCounter net = new PerformanceCounter("Process", "IO Other Bytes/sec", obj.ToString());
 					//float value = net.NextValue();
 					//Console.WriteLine(net.NextValue());
 
-					//while(true)
-					//{
-					//}
+					while(true)
+					{
+						float value = net.NextValue();
+						//Console.WriteLine("Process: {1} Net: {0}", net.NextValue(), ProcessList[0].ProcessName);
+							if(value != 0.0)
+							{
+								notifyicon.Icon = SystemIcons.Warning;
+								// Notify if 8 seconds have passed since the last notification.
+								if(DateTime.Now.Subtract(last_notified).TotalSeconds > 8)
+								{
+									last_notified = DateTime.Now;
+									// Make the message as a string.
+									string message = String.Format("Network activity detected on \"{0}\" at {1}.", net.InstanceName, DateTime.Now.ToString());
+									if(Settings.Notify){	notifyicon.ShowBalloonTip(1000, "Network Usage", message, ToolTipIcon.Info);	}
+									Console.WriteLine(message);
+									// If 'CloseTaskManager' is true, close task manager.
+									if(Settings.CloseTaskManager)
+									{
+										Process[] task_managers = Process.GetProcessesByName("taskmgr");
+										foreach(Process task_manager in task_managers)
+										{
+											Console.WriteLine("Closing task manager.");
+											task_manager.Kill();
+										}
+									}
+									if(Settings.Toggle_WIFI)
+									{
+										// execute 'netsh wlan disconnect' command.
+										Process _process = new Process();
+										_process.StartInfo.FileName = "cmd.exe";
+										_process.StartInfo.Arguments = "/c netsh wlan disconnect";
+										_process.StartInfo.UseShellExecute = false;
+										_process.StartInfo.RedirectStandardOutput = true;
+										_process.StartInfo.CreateNoWindow = true;
+										_process.Start();
+
+										// Read the output (or the error)
+										//string output = _process.StandardOutput.ReadToEnd();
+
+										// Wait for the process to finish.
+										//_process.WaitForExit();
+										//Console.WriteLine(output);
+									}
+								}
+							}
+							else
+							{ notifyicon.Icon = SystemIcons.Application; }
+						Thread.Sleep(1000); // Sleep for 1 second.
+					}
 				}
 				catch ( ThreadAbortException e)
 				{
@@ -309,26 +364,124 @@ namespace LSM
 		{
 			Console.WriteLine("Completed: "+u.ToString());
 		}
-		static void Main()
-		{
-			/*
-			string[] us = {"1", "e", "3"};
-			foreach(string j in us)
-			{
-				Thread t = new Thread(i);
-				Threads.Add(t);
-				t.Start(j);
-			}
-			*/
 
-			
+		[STAThread]
+		static void Main(string[] args)
+		{
+			// First argument
+			if(args.Length > 0)
+			{
+				if(args[0] == "--help" || args[0] == "-h" || args[0] == "/h" || args[0] == "-?" || args[0] == "-help" || args[0] == "/help")
+				{
+					Console.WriteLine("Usage: LSM.exe [--help] [--close-task-manager] [--disable-notify] [--toggle-wifi]");
+					Console.WriteLine("--help: Show this help message.");
+					Console.WriteLine("--close-task-manager: Close task manager when network activity is detected.");
+					Console.WriteLine("--disable-notify: Disable notifications.");
+					Console.WriteLine("--toggle-wifi: Toggle wifi on/off when network activity is detected.");
+					Console.WriteLine("--create-settings: Create a settings file.");
+					Console.WriteLine("--BSOD");
+					return;
+				}
+				// Combine all arguments together.
+				string arg = "";
+				foreach(string a in args)
+				{
+					arg += a;
+				}
+
+				if (arg.Contains("--close-task-manager"))
+				{
+					Settings.CloseTaskManager = true;
+				}
+				if (arg.Contains("--disable-notify"))
+				{
+					Settings.Notify = false;
+				}
+				if (arg.Contains("--toggle-wifi"))
+				{
+					Settings.Toggle_WIFI = true;
+				}
+				if (arg.Contains("--BSOD"))
+				{
+					BSOD.BSOD_();
+					return;
+				}
+				// Create a 'Settings.xml' file by '--create-settings' argument.
+				if (arg.Contains("--create-settings"))
+				{
+					// If 'Settings.xml' file already exists, tell the user.
+					if(File.Exists("Settings.xml"))
+					{
+						Console.WriteLine("'Settings.xml' already exists.");
+						return;
+					}
+					XmlTextWriter xW = new XmlTextWriter("Settings.xml", Encoding.UTF8);
+					xW.Formatting = Formatting.Indented;
+					xW.WriteStartElement("Settings");
+					xW.WriteStartElement("Toggle_WIFI");
+					xW.WriteString("false");
+					xW.WriteEndElement();
+					xW.WriteStartElement("Notify");
+					xW.WriteString("true");
+					xW.WriteEndElement();
+					xW.WriteStartElement("Hide");
+					xW.WriteString("true");
+					xW.WriteEndElement();
+					xW.WriteStartElement("CloseTaskManager");
+					xW.WriteString("false");
+					xW.WriteEndElement();
+					xW.WriteEndElement();
+					xW.Close();
+					Console.WriteLine("Settings.xml file created.");
+					return;
+				}
+			}
+
+			if(File.Exists("Settings.xml"))
+			{
+				try
+				{
+					XmlDocument xDoc = new XmlDocument();
+					xDoc.Load("Settings.xml");
+					if (xDoc.SelectSingleNode("Settings/Toggle_WIFI").InnerText.ToLower() == "true")
+					{	Settings.Toggle_WIFI = true;}
+					if (xDoc.SelectSingleNode("Settings/Notify").InnerText.ToLower() == "false")
+					{	Settings.Notify = false;}
+					if (xDoc.SelectSingleNode("Settings/Hide").InnerText.ToLower() == "false")
+					{	Settings.Hide = false; }
+					if (xDoc.SelectSingleNode("Settings/CloseTaskManager").InnerText.ToLower() == "true")
+					{	Settings.CloseTaskManager = true; }
+				}
+				catch(Exception ex)
+				{
+					Console.WriteLine("There was an error.");
+					Console.WriteLine(ex.Message);
+				}
+			}
+
+			if (Settings.Hide == true)
+			{	Console.WriteLine("LSM");	}
+			else {	Console.WriteLine("Lan School Monitor");	}
+
+			/*
+			foreach (Process theprocess in Process.GetProcesses())
+			{
+				if (theprocess.ProcessName.Contains("firefox") // <For testing only.
+					theprocess.ProcessName.Contains("Lsk") ||
+					theprocess.ProcessName.Contains("student") ||
+					theprocess.ProcessName.Contains("lskHlpr64") ||
+					theprocess.ProcessName.Contains("Isk")
+					)
+				{
+					ProcessList.Add(theprocess);
+					Console.WriteLine("Process: \"{0}\" ID: {1}", theprocess.ProcessName, theprocess.Id);
+				}
+			}*/
 
 			Application.EnableVisualStyles();
 			Application.SetCompatibleTextRenderingDefault(false);
 			//Application.ApplicationExit += new EventHandler(OnApplicationExit);
 			Application.Run(new Form1());
-			
-			Console.WriteLine("Done!");
 		}
 	}
 }
