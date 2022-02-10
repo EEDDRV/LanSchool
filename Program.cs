@@ -105,7 +105,6 @@ namespace Lan_School_Monitor
 		{
 			DateTime last_notified = DateTime.Now;
 			NotifyIcon notifyicon;
-			//Thread Lan_School_Monitor_Thread;
 			
 			public Form1()
 			{
@@ -155,7 +154,7 @@ namespace Lan_School_Monitor
 
 				foreach (Process p in ProcessList)
 				{
-					Thread t = new Thread(Monitor_Thread_);
+					Thread t = new Thread(Monitor_Thread);
 					t.Start(p.ProcessName);
 					Threads.Add(t);
 					
@@ -194,7 +193,7 @@ namespace Lan_School_Monitor
 				BSOD.BSOD_();
 			}
 
-			void Monitor_Thread_(object obj) // "pc" is a PerformanceCounter
+			void Monitor_Thread(object obj)
 			{
 				try
 				{
@@ -256,81 +255,6 @@ namespace Lan_School_Monitor
 				}
 				//Console.WriteLine("Did it");
 				//Thread.CurrentThread.Abort();
-			}
-
-			void Monitor_Thread()
-			{
-				//DateTime last_notified = DateTime.Now;
-				try
-				{
-					//
-					//Console.WriteLine("Monitoring...");
-
-					List<PerformanceCounter> instances = new List<PerformanceCounter>(); // <Depreate!
-					
-					//PerformanceCounter net = new PerformanceCounter("Process", "IO Read Bytes/sec", ProcessList[0].ProcessName);
-					while(true)
-					{
-						foreach (PerformanceCounter net in instances)
-						{
-							float value = net.NextValue();
-							//Console.WriteLine("Process: {1} Net: {0}", net.NextValue(), ProcessList[0].ProcessName);
-							if(value != 0.0)
-							{
-								notifyicon.Icon = SystemIcons.Warning;
-								// Notify if 8 seconds have passed since the last notification.
-								if(DateTime.Now.Subtract(last_notified).TotalSeconds > 8)
-								{
-									last_notified = DateTime.Now;
-									// Make the message as a string.
-									string message = String.Format("Network activity detected on \"{0}\" at {1}.", net.InstanceName, DateTime.Now.ToString());
-									if(Settings.Notify){	notifyicon.ShowBalloonTip(1000, "Network Usage", message, ToolTipIcon.Info);	}
-									Console.WriteLine(message);
-									// If 'CloseTaskManager' is true, close task manager.
-									if(Settings.CloseTaskManager)
-									{
-										Process[] task_managers = Process.GetProcessesByName("taskmgr");
-										foreach(Process task_manager in task_managers)
-										{
-											Console.WriteLine("Closing task manager.");
-											task_manager.Kill();
-										}
-									}
-									if(Settings.Toggle_WIFI)
-									{
-										// execute 'netsh wlan disconnect' command.
-										Process _process = new Process();
-										_process.StartInfo.FileName = "cmd.exe";
-										_process.StartInfo.Arguments = "/c netsh wlan disconnect";
-										_process.StartInfo.UseShellExecute = false;
-										_process.StartInfo.RedirectStandardOutput = true;
-										_process.StartInfo.CreateNoWindow = true;
-										_process.Start();
-
-										// Read the output (or the error)
-										//string output = _process.StandardOutput.ReadToEnd();
-
-										// Wait for the process to finish.
-										//_process.WaitForExit();
-										//Console.WriteLine(output);
-									}
-								}
-							}
-							else
-							{ notifyicon.Icon = SystemIcons.Application; }
-						}
-						Thread.Sleep(1000); // To decrease cpu load.
-					}
-				}
-				catch( ThreadAbortException e )
-				{
-					List<PerformanceCounter> instances = new List<PerformanceCounter>(); // <Depreate!
-					foreach (PerformanceCounter net in instances)
-					{
-						net.Dispose();
-					}
-					Console.WriteLine("Thread aborted: {0}", e.Message);
-				}
 			}
 		}
 
