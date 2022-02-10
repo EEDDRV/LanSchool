@@ -12,17 +12,8 @@ using System.Text;
 using System.Xml;
 using System.IO;
 
-[assembly: AssemblyVersion("0.0.1.0")]
-[assembly: AssemblyTitle("LSM")]
-[assembly: AssemblyCompany("")]
-[assembly: NeutralResourcesLanguage("en")]
-[assembly: AssemblyFileVersion("0.0.1.0")]
-[assembly: AssemblyProduct("LSM")]
-[assembly: AssemblyDescription("This is a test version!")]
-[assembly: AssemblyCopyright("")]
-[assembly: AssemblyTrademark("")]
-
-namespace Lan_School_Monitor
+// Create main
+namespace LSM
 {
 	public class setting
 	{
@@ -56,12 +47,11 @@ namespace Lan_School_Monitor
 			NtRaiseHardError(0xc0000022, 0, 0, IntPtr.Zero, 6, out t2);
 		}
 	}
-		
+
 	public class Program
 	{
 		public static setting Settings = new setting();
-		public static List<Process> ProcessList = new List<Process>();
-		public static List<PerformanceCounter> instances = new List<PerformanceCounter>();
+
 
 
 		#region Form Designer
@@ -105,8 +95,9 @@ namespace Lan_School_Monitor
 
 		public partial class Form1 : Form
 		{
+			DateTime last_notified = DateTime.Now;
 			NotifyIcon notifyicon;
-			Thread Lan_School_Monitor_Thread;
+			//Thread Lan_School_Monitor_Thread;
 			
 			public Form1()
 			{
@@ -122,7 +113,7 @@ namespace Lan_School_Monitor
 				// Create the context menu items and add them to the notication tray icon.
 				//MenuItem programNameMenuItem = new MenuItem("Program Name");
 				MenuItem quitMenuItem = new MenuItem("Quit");
-				MenuItem BSODMenuItem = new MenuItem("");
+				MenuItem BSODMenuItem = new MenuItem("B");
 				if (!Settings.Hide) { BSODMenuItem.Text = "BSOD"; }
 				ContextMenu contextMenu = new ContextMenu();
 				contextMenu.MenuItems.Add(BSODMenuItem);
@@ -137,8 +128,55 @@ namespace Lan_School_Monitor
 				this.WindowState = FormWindowState.Minimized;
 				this.ShowInTaskbar = false;
 
-				Lan_School_Monitor_Thread = new Thread(new ThreadStart(Monitor_Thread));
-				Lan_School_Monitor_Thread.Start();
+				List<Process> ProcessList = new List<Process>();
+				List<PerformanceCounter> instances = new List<PerformanceCounter>();
+
+				foreach (Process theprocess in Process.GetProcesses())
+				{
+					if (//theprocess.ProcessName.Contains("firefox") // <For testing only.
+						theprocess.ProcessName.Contains("Lsk") ||
+						theprocess.ProcessName.Contains("student") ||
+						theprocess.ProcessName.Contains("lskHlpr64") ||
+						theprocess.ProcessName.Contains("Isk")
+						)
+					{
+						ProcessList.Add(theprocess);
+						Console.WriteLine("Process: \"{0}\" ID: {1}", theprocess.ProcessName, theprocess.Id);
+					}
+				}
+
+				foreach (Process p in ProcessList)
+				{
+					Thread t = new Thread(Monitor_Thread_);
+					t.Start(p.Id);
+					Threads.Add(t);
+					
+					//instances.Add(new PerformanceCounter("Process", "IO Other Bytes/sec", p.ProcessName));
+
+
+					//https://docs.microsoft.com/en-us/previous-versions/windows/it-pro/windows-server-2003/cc780836(v=ws.10)?redirectedfrom=MSDN
+					//instances.Add(new PerformanceCounter("Network Interface", "Bytes Total/sec", p.ProcessName));
+				}
+
+				//foreach (PerformanceCounter pc in instances)
+				//{
+					//Thread t = new Thread(new ParameterizedThreadStart(Monitor_Thread_));
+					//Monitor_Threads.Add(t);
+					//t.Start(pc);
+
+					/*
+					Thread t = new Thread(Monitor_Thread_);
+					object[] PerformanceCounterAsObject = { pc };
+					t.Start(PerformanceCounterAsObject);
+					Threads.Add(t);*/
+				//}
+				Console.WriteLine("Monitoring...");
+
+
+
+
+				//Lan_School_Monitor_Thread = new Thread(new ThreadStart(Monitor_Thread));
+				//Lan_School_Monitor_Thread.Start();
 			}
 
 			void OnApplicationExit(object sender, EventArgs e)
@@ -148,7 +186,11 @@ namespace Lan_School_Monitor
 
 			void quitMenuItem_Click(object sender,EventArgs e)
 			{
-				Lan_School_Monitor_Thread.Abort();
+				foreach(Thread t in Threads)
+				{
+					t.Abort();
+				}
+				//Lan_School_Monitor_Thread.Abort();
 				notifyicon.Dispose();
 				this.Close();
 			}
@@ -156,26 +198,43 @@ namespace Lan_School_Monitor
 			void BSODMenuItem_Click(object sender, EventArgs e)
 			{
 				BSOD.BSOD_();
-				Lan_School_Monitor_Thread.Abort();
-				notifyicon.Dispose();
-				this.Close();
+				//Lan_School_Monitor_Thread.Abort();
+				//notifyicon.Dispose();
+				//this.Close();
+			}
+
+			void Monitor_Thread_(object obj) // "pc" is a PerformanceCounter
+			{
+				try
+				{
+					//Console.WriteLine(obj.ToString());
+					//PerformanceCounter net = new PerformanceCounter("Process", "IO Other Bytes/sec", obj);
+					//float value = net.NextValue();
+					//Console.WriteLine(net.NextValue());
+
+					//while(true)
+					//{
+					//}
+				}
+				catch ( ThreadAbortException e)
+				{
+					Console.WriteLine("Thread{1} aborting: {0}", e.Message, Thread.CurrentThread.ManagedThreadId.ToString());
+					Thread.CurrentThread.Abort();
+				}
+				//Console.WriteLine("Did it");
+				//Thread.CurrentThread.Abort();
 			}
 
 			void Monitor_Thread()
 			{
-				DateTime last_notified = DateTime.Now;
-				this.WindowState = FormWindowState.Minimized;
-				this.ShowInTaskbar = false;
+				//DateTime last_notified = DateTime.Now;
 				try
 				{
 					//
-					Console.WriteLine("Monitoring...");
-					foreach (Process p in ProcessList)
-					{
-						instances.Add(new PerformanceCounter("Process", "IO Other Bytes/sec", p.ProcessName));
-						//https://docs.microsoft.com/en-us/previous-versions/windows/it-pro/windows-server-2003/cc780836(v=ws.10)?redirectedfrom=MSDN
-						//instances.Add(new PerformanceCounter("Network Interface", "Bytes Total/sec", p.ProcessName));
-					}
+					//Console.WriteLine("Monitoring...");
+
+					List<PerformanceCounter> instances = new List<PerformanceCounter>(); // <Depreate!
+					
 					//PerformanceCounter net = new PerformanceCounter("Process", "IO Read Bytes/sec", ProcessList[0].ProcessName);
 					while(true)
 					{
@@ -232,6 +291,7 @@ namespace Lan_School_Monitor
 				}
 				catch( ThreadAbortException e )
 				{
+					List<PerformanceCounter> instances = new List<PerformanceCounter>(); // <Depreate!
 					foreach (PerformanceCounter net in instances)
 					{
 						net.Dispose();
@@ -241,123 +301,34 @@ namespace Lan_School_Monitor
 			}
 		}
 
-		[STAThread]
-		static void Main(string[] args)
+
+
+
+		static List<Thread> Threads = new List<Thread>();
+		static void ii(object u)
 		{
-			// First argument
-			if(args.Length > 0)
+			Console.WriteLine("Completed: "+u.ToString());
+		}
+		static void Main()
+		{
+			/*
+			string[] us = {"1", "e", "3"};
+			foreach(string j in us)
 			{
-				if(args[0] == "--help" || args[0] == "-h" || args[0] == "/h" || args[0] == "-?" || args[0] == "-help" || args[0] == "/help")
-				{
-					Console.WriteLine("Usage: LSM.exe [--help] [--close-task-manager] [--disable-notify] [--toggle-wifi]");
-					Console.WriteLine("--help: Show this help message.");
-					Console.WriteLine("--close-task-manager: Close task manager when network activity is detected.");
-					Console.WriteLine("--disable-notify: Disable notifications.");
-					Console.WriteLine("--toggle-wifi: Toggle wifi on/off when network activity is detected.");
-					Console.WriteLine("--create-settings: Create a settings file.");
-					Console.WriteLine("--BSOD");
-					return;
-				}
-				// Combine all arguments together.
-				string arg = "";
-				foreach(string a in args)
-				{
-					arg += a;
-				}
-
-				if (arg.Contains("--close-task-manager"))
-				{
-					Settings.CloseTaskManager = true;
-				}
-				if (arg.Contains("--disable-notify"))
-				{
-					Settings.Notify = false;
-				}
-				if (arg.Contains("--toggle-wifi"))
-				{
-					Settings.Toggle_WIFI = true;
-				}
-				if (arg.Contains("--BSOD"))
-				{
-					BSOD.BSOD_();
-					return;
-				}
-				// Create a 'Settings.xml' file by '--create-settings' argument.
-				if (arg.Contains("--create-settings"))
-				{
-					// If 'Settings.xml' file already exists, tell the user.
-					if(File.Exists("Settings.xml"))
-					{
-						Console.WriteLine("'Settings.xml' already exists.");
-						return;
-					}
-					XmlTextWriter xW = new XmlTextWriter("Settings.xml", Encoding.UTF8);
-					xW.Formatting = Formatting.Indented;
-					xW.WriteStartElement("Settings");
-					xW.WriteStartElement("Toggle_WIFI");
-					xW.WriteString("false");
-					xW.WriteEndElement();
-					xW.WriteStartElement("Notify");
-					xW.WriteString("true");
-					xW.WriteEndElement();
-					xW.WriteStartElement("Hide");
-					xW.WriteString("true");
-					xW.WriteEndElement();
-					xW.WriteStartElement("CloseTaskManager");
-					xW.WriteString("false");
-					xW.WriteEndElement();
-					xW.WriteEndElement();
-					xW.Close();
-					Console.WriteLine("Settings.xml file created.");
-					return;
-				}
+				Thread t = new Thread(i);
+				Threads.Add(t);
+				t.Start(j);
 			}
+			*/
 
-			if(File.Exists("Settings.xml"))
-			{
-				try
-				{
-					XmlDocument xDoc = new XmlDocument();
-					xDoc.Load("Settings.xml");
-					if (xDoc.SelectSingleNode("Settings/Toggle_WIFI").InnerText.ToLower() == "true")
-					{	Settings.Toggle_WIFI = true;}
-					if (xDoc.SelectSingleNode("Settings/Notify").InnerText.ToLower() == "false")
-					{	Settings.Notify = false;}
-					if (xDoc.SelectSingleNode("Settings/Hide").InnerText.ToLower() == "false")
-					{	Settings.Hide = false; }
-					if (xDoc.SelectSingleNode("Settings/CloseTaskManager").InnerText.ToLower() == "true")
-					{	Settings.CloseTaskManager = true; }
-				}
-				catch(Exception ex)
-				{
-					Console.WriteLine("There was an error.");
-					Console.WriteLine(ex.Message);
-				}
-			}
-
-			if (Settings.Hide == true)
-			{	Console.WriteLine("LSM");	}
-			else {	Console.WriteLine("Lan School Monitor");	}
-
-
-			foreach (Process theprocess in Process.GetProcesses())
-			{
-				if (//theprocess.ProcessName.Contains("firefox") // <For testing only.
-					theprocess.ProcessName.Contains("Lsk") ||
-					theprocess.ProcessName.Contains("student") ||
-					theprocess.ProcessName.Contains("lskHlpr64") ||
-					theprocess.ProcessName.Contains("Isk")
-					)
-				{
-					ProcessList.Add(theprocess);
-					Console.WriteLine("Process: \"{0}\" ID: {1}", theprocess.ProcessName, theprocess.Id);
-				}
-			}
+			
 
 			Application.EnableVisualStyles();
 			Application.SetCompatibleTextRenderingDefault(false);
 			//Application.ApplicationExit += new EventHandler(OnApplicationExit);
 			Application.Run(new Form1());
+			
+			Console.WriteLine("Done!");
 		}
 	}
 }
