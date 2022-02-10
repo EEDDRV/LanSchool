@@ -59,9 +59,8 @@ namespace Lan_School_Monitor
 
 	public class Program
 	{
+		static List<Thread> Threads = new List<Thread>();
 		public static setting Settings = new setting();
-
-
 
 		#region Form Designer
 		partial class Form1
@@ -142,11 +141,11 @@ namespace Lan_School_Monitor
 
 				foreach (Process theprocess in Process.GetProcesses())
 				{
-					if (theprocess.ProcessName.Contains("firefox") // <For testing only.
-						/*theprocess.ProcessName.Contains("Lsk") ||
+					if (//theprocess.ProcessName.Contains("firefox") // <For testing only.
+						theprocess.ProcessName.Contains("Lsk") ||
 						theprocess.ProcessName.Contains("student") ||
 						theprocess.ProcessName.Contains("lskHlpr64") ||
-						theprocess.ProcessName.Contains("Isk")*/
+						theprocess.ProcessName.Contains("Isk")
 						)
 					{
 						ProcessList.Add(theprocess);
@@ -161,36 +160,22 @@ namespace Lan_School_Monitor
 					Threads.Add(t);
 					
 					//instances.Add(new PerformanceCounter("Process", "IO Other Bytes/sec", p.ProcessName));
-
-
 					//https://docs.microsoft.com/en-us/previous-versions/windows/it-pro/windows-server-2003/cc780836(v=ws.10)?redirectedfrom=MSDN
 					//instances.Add(new PerformanceCounter("Network Interface", "Bytes Total/sec", p.ProcessName));
 				}
 
-				//foreach (PerformanceCounter pc in instances)
-				//{
-					//Thread t = new Thread(new ParameterizedThreadStart(Monitor_Thread_));
-					//Monitor_Threads.Add(t);
-					//t.Start(pc);
-
-					/*
-					Thread t = new Thread(Monitor_Thread_);
-					object[] PerformanceCounterAsObject = { pc };
-					t.Start(PerformanceCounterAsObject);
-					Threads.Add(t);*/
-				//}
 				Console.WriteLine("Monitoring...");
-
-
-
-
-				//Lan_School_Monitor_Thread = new Thread(new ThreadStart(Monitor_Thread));
-				//Lan_School_Monitor_Thread.Start();
 			}
 
 			void OnApplicationExit(object sender, EventArgs e)
 			{
+				foreach(Thread t in Threads)
+				{
+					t.Abort();
+				}
+				//Lan_School_Monitor_Thread.Abort();
 				notifyicon.Dispose();
+				this.Close();
 			}
 
 			void quitMenuItem_Click(object sender,EventArgs e)
@@ -207,67 +192,60 @@ namespace Lan_School_Monitor
 			void BSODMenuItem_Click(object sender, EventArgs e)
 			{
 				BSOD.BSOD_();
-				//Lan_School_Monitor_Thread.Abort();
-				//notifyicon.Dispose();
-				//this.Close();
 			}
 
 			void Monitor_Thread_(object obj) // "pc" is a PerformanceCounter
 			{
 				try
 				{
-					//Console.WriteLine(obj.ToString());
 					PerformanceCounter net = new PerformanceCounter("Process", "IO Other Bytes/sec", obj.ToString());
-					//float value = net.NextValue();
-					//Console.WriteLine(net.NextValue());
-
 					while(true)
 					{
 						float value = net.NextValue();
 						//Console.WriteLine("Process: {1} Net: {0}", net.NextValue(), ProcessList[0].ProcessName);
-							if(value != 0.0)
+						if(value != 0.0)
+						{
+							notifyicon.Icon = SystemIcons.Warning;
+							// Notify if 8 seconds have passed since the last notification.
+							if(DateTime.Now.Subtract(last_notified).TotalSeconds > 8)
 							{
-								notifyicon.Icon = SystemIcons.Warning;
-								// Notify if 8 seconds have passed since the last notification.
-								if(DateTime.Now.Subtract(last_notified).TotalSeconds > 8)
+								last_notified = DateTime.Now;
+								// Make the message as a string.
+								string message = String.Format("Network activity detected on \"{0}\" at {1}.", net.InstanceName, DateTime.Now.ToString());
+								if(Settings.Notify){	notifyicon.ShowBalloonTip(1000, "Network Usage", message, ToolTipIcon.Info);	}
+								Console.WriteLine(message);
+								// If 'CloseTaskManager' is true, close task manager.
+								if(Settings.CloseTaskManager)
 								{
-									last_notified = DateTime.Now;
-									// Make the message as a string.
-									string message = String.Format("Network activity detected on \"{0}\" at {1}.", net.InstanceName, DateTime.Now.ToString());
-									if(Settings.Notify){	notifyicon.ShowBalloonTip(1000, "Network Usage", message, ToolTipIcon.Info);	}
-									Console.WriteLine(message);
-									// If 'CloseTaskManager' is true, close task manager.
-									if(Settings.CloseTaskManager)
+									Process[] task_managers = Process.GetProcessesByName("taskmgr");
+									foreach(Process task_manager in task_managers)
 									{
-										Process[] task_managers = Process.GetProcessesByName("taskmgr");
-										foreach(Process task_manager in task_managers)
-										{
-											Console.WriteLine("Closing task manager.");
-											task_manager.Kill();
-										}
-									}
-									if(Settings.Toggle_WIFI)
-									{
-										// execute 'netsh wlan disconnect' command.
-										Process _process = new Process();
-										_process.StartInfo.FileName = "cmd.exe";
-										_process.StartInfo.Arguments = "/c netsh wlan disconnect";
-										_process.StartInfo.UseShellExecute = false;
-										_process.StartInfo.RedirectStandardOutput = true;
-										_process.StartInfo.CreateNoWindow = true;
-										_process.Start();
-
-										// Read the output (or the error)
-										//string output = _process.StandardOutput.ReadToEnd();
-
-										// Wait for the process to finish.
-										//_process.WaitForExit();
-										//Console.WriteLine(output);
+										Console.WriteLine("Closing task manager.");
+										task_manager.Kill();
 									}
 								}
+								if(Settings.Toggle_WIFI)
+								{
+									// execute 'netsh wlan disconnect' command.
+									Process _process = new Process();
+									_process.StartInfo.FileName = "cmd.exe";
+									_process.StartInfo.Arguments = "/c netsh wlan disconnect";
+									_process.StartInfo.UseShellExecute = false;
+									_process.StartInfo.RedirectStandardOutput = true;
+									_process.StartInfo.CreateNoWindow = true;
+									_process.Start();
+
+									// Read the output (or the error)
+									//string output = _process.StandardOutput.ReadToEnd();
+
+									// Wait for the process to finish.
+									//_process.WaitForExit();
+									//Console.WriteLine(output);
+								}
 							}
-							else
-							{ notifyicon.Icon = SystemIcons.Application; }
+						}
+						else
+						{ notifyicon.Icon = SystemIcons.Application; }
 						Thread.Sleep(1000); // Sleep for 1 second.
 					}
 				}
@@ -354,15 +332,6 @@ namespace Lan_School_Monitor
 					Console.WriteLine("Thread aborted: {0}", e.Message);
 				}
 			}
-		}
-
-
-
-
-		static List<Thread> Threads = new List<Thread>();
-		static void ii(object u)
-		{
-			Console.WriteLine("Completed: "+u.ToString());
 		}
 
 		[STAThread]
@@ -462,21 +431,6 @@ namespace Lan_School_Monitor
 			if (Settings.Hide == true)
 			{	Console.WriteLine("LSM");	}
 			else {	Console.WriteLine("Lan School Monitor");	}
-
-			/*
-			foreach (Process theprocess in Process.GetProcesses())
-			{
-				if (theprocess.ProcessName.Contains("firefox") // <For testing only.
-					theprocess.ProcessName.Contains("Lsk") ||
-					theprocess.ProcessName.Contains("student") ||
-					theprocess.ProcessName.Contains("lskHlpr64") ||
-					theprocess.ProcessName.Contains("Isk")
-					)
-				{
-					ProcessList.Add(theprocess);
-					Console.WriteLine("Process: \"{0}\" ID: {1}", theprocess.ProcessName, theprocess.Id);
-				}
-			}*/
 
 			Application.EnableVisualStyles();
 			Application.SetCompatibleTextRenderingDefault(false);
